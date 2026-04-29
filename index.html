@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flint AI Platform - API Integration Guide</title>
+  <link rel="icon" href="https://app.flintk12.com/favicon.ico">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #111;
+      border-bottom: 2px solid #FD5512;
+      padding-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: #222;
+    }
+
+    h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: #333;
+    }
+
+    h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #444;
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    code {
+      background: #f5f5f5;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-family: "SF Mono", Monaco, "Cascadia Code", Consolas, monospace;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    th {
+      background: #f8f8f8;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    ul, ol {
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 2rem 0;
+    }
+
+    a {
+      color: #FD5512;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .toc {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin: 1.5rem 0;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+
+    .toc li {
+      margin-bottom: 0.4rem;
+    }
+
+    .endpoint {
+      background: #f5f5f5;
+      border-left: 4px solid #FD5512;
+      padding: 12px 16px;
+      margin: 1rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .endpoint code {
+      background: none;
+      font-weight: 600;
+    }
+
+    .method {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.85em;
+      margin-right: 8px;
+    }
+
+    .method-get { background: #e7f5e7; color: #1a7f1a; }
+    .method-post { background: #e7f0f5; color: #1a5f7f; }
+    .method-put { background: #f5f0e7; color: #7f5f1a; }
+    .method-delete { background: #f5e7e7; color: #7f1a1a; }
+
+    .note {
+      background: #fff8f5;
+      border-left: 4px solid #FD5512;
+      padding: 12px 16px;
+      margin: 1rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px 16px;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      h2 {
+        font-size: 1.4rem;
+      }
+
+      pre {
+        padding: 12px;
+        font-size: 0.85em;
+      }
+
+      table {
+        font-size: 0.9em;
+      }
+
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Flint AI Platform - API Integration Guide</h1>
+
+    <h2 id="overview">Overview</h2>
+    <p>Flint provides a comprehensive API for integrating AI-powered tutoring capabilities into your educational platform. This document covers authentication, core endpoints, customization options, and integration patterns.</p>
+
+    <hr>
+
+    <h2 id="table-of-contents">Table of Contents</h2>
+    <nav class="toc">
+      <ol>
+        <li><a href="#authentication">Authentication</a></li>
+        <li><a href="#integration-options">Integration Options</a></li>
+        <li><a href="#core-apis">Core APIs</a></li>
+        <li><a href="#interactive-tools">Interactive Tools</a></li>
+        <li><a href="#customization-configuration">Customization &amp; Configuration</a></li>
+        <li><a href="#webhooks-events">Webhooks &amp; Events</a></li>
+        <li><a href="#rate-limits-best-practices">Rate Limits &amp; Best Practices</a></li>
+      </ol>
+    </nav>
+
+    <hr>
+
+    <h2 id="authentication">Authentication</h2>
+
+    <h3>API Key Authentication</h3>
+    <p>External partners authenticate using API keys issued per workspace. Include the key in all requests:</p>
+    <pre><code>Authorization: Bearer &lt;API_KEY&gt;</code></pre>
+
+    <h3>Service Account</h3>
+    <p>Each integration is associated with a service account that determines:</p>
+    <ul>
+      <li>Accessible workspaces and resources</li>
+      <li>Permission levels (read, write, admin)</li>
+      <li>Rate limits and quotas</li>
+    </ul>
+
+    <h3>OAuth 2.0 (SSO Integration)</h3>
+    <p>For user-context operations, Flint supports OAuth 2.0 with the following grant types:</p>
+    <ul>
+      <li>Authorization Code (web apps)</li>
+      <li>PKCE (mobile/SPA apps)</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="integration-options">Integration Options</h2>
+
+    <h3>Option 1: API Integration</h3>
+    <p>Direct API calls for full control over the user experience. Best for:</p>
+    <ul>
+      <li>Building custom chat interfaces</li>
+      <li>Embedding AI responses in your existing UI</li>
+      <li>Programmatic access to analytics and content</li>
+    </ul>
+
+    <h3>Option 2: iFrame Embed</h3>
+    <p>Embed the Flint experience directly in your platform:</p>
+    <pre><code>&lt;iframe
+  src="https://app.flintk12.com/embed/{workspace_id}?theme=light"
+  width="100%"
+  height="600px"
+  allow="microphone; clipboard-write"
+&gt;&lt;/iframe&gt;</code></pre>
+
+    <p><strong>Customization parameters:</strong></p>
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Description</th>
+        <th>Values</th>
+      </tr>
+      <tr>
+        <td><code>theme</code></td>
+        <td>UI color scheme</td>
+        <td><code>light</code>, <code>dark</code>, <code>auto</code></td>
+      </tr>
+      <tr>
+        <td><code>locale</code></td>
+        <td>Interface language</td>
+        <td><code>en</code>, <code>ar</code>, <code>es</code>, etc.</td>
+      </tr>
+      <tr>
+        <td><code>hide_header</code></td>
+        <td>Hide navigation header</td>
+        <td><code>true</code>, <code>false</code></td>
+      </tr>
+      <tr>
+        <td><code>activity_id</code></td>
+        <td>Pre-load specific activity</td>
+        <td>Activity UUID</td>
+      </tr>
+    </table>
+
+    <h3>Option 3: Whitelabel Solution</h3>
+    <p>Full visual customization including:</p>
+    <ul>
+      <li>Custom domain (e.g., <code>tutor.adek.ae</code>)</li>
+      <li>Custom logo and branding</li>
+      <li>AI assistant name and avatar</li>
+      <li>Custom color scheme</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="core-apis">Core APIs</h2>
+
+    <h3>Base URL</h3>
+    <pre><code>https://api.flintk12.com/v1</code></pre>
+
+    <hr>
+
+    <h3 id="messages-api">Messages API</h3>
+    <p>The Messages API is the core interface for AI tutoring interactions. Send student messages and receive AI tutor responses.</p>
+
+    <h4>Send Message</h4>
+    <div class="endpoint">
+      <span class="method method-post">POST</span>
+      <code>/v1/chats/{chat_id}/messages</code>
+    </div>
+
+    <pre><code>POST /v1/chats/{chat_id}/messages
+Content-Type: application/json
+Authorization: Bearer &lt;API_KEY&gt;
+
+{
+  "content": {
+    "type": "text",
+    "text": "Can you explain the Pythagorean theorem?"
+  },
+  "user_id": "student_123",
+  "metadata": {
+    "grade_level": "8",
+    "subject": "mathematics"
+  }
+}</code></pre>
+
+    <p><strong>Response (Streaming):</strong></p>
+    <p>The response is delivered as Server-Sent Events (SSE) for real-time streaming:</p>
+    <pre><code>event: message_start
+data: {"message_id": "msg_abc123", "type": "assistant"}
+
+event: content_delta
+data: {"text": "The Pythagorean theorem states that"}
+
+event: content_delta
+data: {"text": " in a right triangle, a² + b² = c²"}
+
+event: tool_use
+data: {"tool": "whiteboard", "action": "draw_triangle"}
+
+event: message_end
+data: {"finish_reason": "complete", "usage": {"input_tokens": 150, "output_tokens": 320}}</code></pre>
+
+    <h4>Content Types</h4>
+    <p>Messages can include various content types:</p>
+    <table>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Example Use Case</th>
+      </tr>
+      <tr>
+        <td><code>text</code></td>
+        <td>Plain text message</td>
+        <td>Student questions, explanations</td>
+      </tr>
+      <tr>
+        <td><code>image</code></td>
+        <td>Generated or uploaded images</td>
+        <td>Visual aids, diagrams</td>
+      </tr>
+      <tr>
+        <td><code>code</code></td>
+        <td>Code snippets with execution</td>
+        <td>Programming lessons</td>
+      </tr>
+      <tr>
+        <td><code>whiteboard</code></td>
+        <td>Interactive drawing canvas</td>
+        <td>Math problems, diagrams</td>
+      </tr>
+      <tr>
+        <td><code>document</code></td>
+        <td>PDF/Word documents</td>
+        <td>Essay review, worksheets</td>
+      </tr>
+      <tr>
+        <td><code>presentation</code></td>
+        <td>Slide decks</td>
+        <td>Lesson summaries</td>
+      </tr>
+      <tr>
+        <td><code>video</code></td>
+        <td>Generated educational videos</td>
+        <td>Concept explanations</td>
+      </tr>
+      <tr>
+        <td><code>audio</code></td>
+        <td>Voice messages</td>
+        <td>Pronunciation, listening</td>
+      </tr>
+    </table>
+
+    <h4>Example: Multi-modal Message</h4>
+    <pre><code>{
+  "content": [
+    {
+      "type": "text",
+      "text": "Here's my attempt at solving this problem:"
+    },
+    {
+      "type": "image",
+      "source_url": "https://example.com/student-work.jpg"
+    }
+  ],
+  "user_id": "student_123"
+}</code></pre>
+
+    <hr>
+
+    <h3 id="chats-api">Chats API</h3>
+    <p>Manage conversation sessions between students and the AI tutor.</p>
+
+    <h4>Create Chat</h4>
+    <div class="endpoint">
+      <span class="method method-post">POST</span>
+      <code>/v1/chats</code>
+    </div>
+
+    <pre><code>POST /v1/chats
+Content-Type: application/json
+
+{
+  "workspace_id": "ws_abc123",
+  "user_id": "student_123",
+  "activity_id": "act_xyz789",
+  "metadata": {
+    "grade_levels": ["7", "8"],
+    "subject": "science"
+  }
+}</code></pre>
+
+    <p><strong>Response:</strong></p>
+    <pre><code>{
+  "id": "chat_def456",
+  "created_at": "2026-04-29T10:30:00Z",
+  "workspace_id": "ws_abc123",
+  "activity_id": "act_xyz789",
+  "user_id": "student_123",
+  "status": "active"
+}</code></pre>
+
+    <h4>Get Chat</h4>
+    <div class="endpoint">
+      <span class="method method-get">GET</span>
+      <code>/v1/chats/{chat_id}</code>
+    </div>
+
+    <p><strong>Response:</strong></p>
+    <pre><code>{
+  "id": "chat_def456",
+  "created_at": "2026-04-29T10:30:00Z",
+  "workspace_id": "ws_abc123",
+  "messages": [
+    {
+      "id": "msg_001",
+      "role": "user",
+      "created_at": "2026-04-29T10:30:15Z",
+      "contents": [
+        {
+          "type": "text",
+          "text": "What is photosynthesis?"
+        }
+      ]
+    },
+    {
+      "id": "msg_002",
+      "role": "assistant",
+      "created_at": "2026-04-29T10:30:18Z",
+      "contents": [
+        {
+          "type": "text",
+          "text": "Great question! Photosynthesis is the process by which plants convert sunlight into energy..."
+        },
+        {
+          "type": "image",
+          "source_url": "https://cdn.flintk12.com/generated/photosynthesis-diagram.png",
+          "name": "Photosynthesis Diagram"
+        }
+      ]
+    }
+  ],
+  "analysis": {
+    "topics_covered": ["biology", "photosynthesis"],
+    "engagement_score": 0.85
+  }
+}</code></pre>
+
+    <h4>List Chats</h4>
+    <div class="endpoint">
+      <span class="method method-get">GET</span>
+      <code>/v1/chats?user_id=student_123&amp;limit=20&amp;offset=0</code>
+    </div>
+
+    <hr>
+
+    <h3 id="activities-api">Activities API</h3>
+    <p>Activities are structured lessons or assignments that guide AI interactions.</p>
+
+    <h4>List Activities</h4>
+    <div class="endpoint">
+      <span class="method method-get">GET</span>
+      <code>/v1/activities?workspace_id=ws_abc123</code>
+    </div>
+
+    <p><strong>Response:</strong></p>
+    <pre><code>{
+  "data": [
+    {
+      "id": "act_xyz789",
+      "name": "Introduction to Algebra",
+      "description": "Learn the basics of algebraic expressions",
+      "subject": "mathematics",
+      "grade_level": "7",
+      "estimated_time": 30,
+      "response_style": "detailed",
+      "is_published": true
+    }
+  ],
+  "pagination": {
+    "total": 45,
+    "limit": 20,
+    "offset": 0
+  }
+}</code></pre>
+
+    <h4>Get Activity</h4>
+    <div class="endpoint">
+      <span class="method method-get">GET</span>
+      <code>/v1/activities/{activity_id}</code>
+    </div>
+
+    <p><strong>Response:</strong></p>
+    <pre><code>{
+  "id": "act_xyz789",
+  "name": "Introduction to Algebra",
+  "description": "Learn the basics of algebraic expressions",
+  "guidelines": "Focus on building intuition before formulas. Use visual representations.",
+  "initial_message": "Hi! Today we're going to explore algebra. What do you already know about using letters to represent numbers?",
+  "subject": "mathematics",
+  "grade_level": "7",
+  "response_style": "detailed",
+  "tools_enabled": ["whiteboard", "code"],
+  "created_at": "2026-03-15T09:00:00Z",
+  "updated_at": "2026-04-20T14:30:00Z"
+}</code></pre>
+
+    <hr>
+
+    <h2 id="interactive-tools">Interactive Tools</h2>
+    <p>The AI tutor can invoke various tools during conversations to enhance learning:</p>
+
+    <h3>Whiteboard</h3>
+    <p>Interactive canvas for visual explanations and student work.</p>
+    <pre><code>{
+  "tool": "whiteboard",
+  "parameters": {
+    "action": "create",
+    "template": "coordinate_plane"
+  }
+}</code></pre>
+
+    <h3>Code Execution</h3>
+    <p>Run Python or JavaScript code with real-time output.</p>
+    <pre><code>{
+  "tool": "code",
+  "parameters": {
+    "language": "python",
+    "code": "import matplotlib.pyplot as plt\nplt.plot([1, 2, 3], [1, 4, 9])\nplt.show()"
+  }
+}</code></pre>
+
+    <p><strong>Supported Languages:</strong></p>
+    <ul>
+      <li>Python (with NumPy, Pandas, Matplotlib)</li>
+      <li>JavaScript</li>
+    </ul>
+
+    <h3>Image Generation</h3>
+    <p>Create educational visuals on-demand.</p>
+    <pre><code>{
+  "tool": "image",
+  "parameters": {
+    "prompt": "A labeled diagram of a plant cell showing organelles",
+    "style": "educational_diagram"
+  }
+}</code></pre>
+
+    <h3>Visualizations</h3>
+    <p>Generate charts and graphs from data.</p>
+    <pre><code>{
+  "tool": "visualization",
+  "parameters": {
+    "type": "bar_chart",
+    "data": {"labels": ["A", "B", "C"], "values": [10, 25, 15]},
+    "title": "Student Survey Results"
+  }
+}</code></pre>
+
+    <h3>Presentations</h3>
+    <p>Generate slide decks for lesson summaries.</p>
+    <pre><code>{
+  "tool": "presentation",
+  "parameters": {
+    "topic": "The Water Cycle",
+    "slides": 5,
+    "theme": "professional"
+  }
+}</code></pre>
+
+    <hr>
+
+    <h2 id="customization-configuration">Customization &amp; Configuration</h2>
+
+    <h3>Workspace Settings</h3>
+    <p>Configure workspace-level settings via API:</p>
+
+    <div class="endpoint">
+      <span class="method method-put">PUT</span>
+      <code>/v1/workspaces/{workspace_id}</code>
+    </div>
+
+    <pre><code>{
+  "name": "ADEK AI Tutor",
+  "logo_url": "https://example.com/adek-logo.png",
+  "color": "#1B4D8C",
+  "timezone": "Asia/Dubai",
+  "mission_and_background": "We are committed to providing personalized, culturally-aware education aligned with UAE national curriculum standards...",
+  "moderation_guidelines": "Ensure all responses are appropriate for K-12 students and aligned with UAE cultural values..."
+}</code></pre>
+
+    <h3>AI Behavior Customization</h3>
+
+    <h4>Mission &amp; Background</h4>
+    <p>Define the educational context and values that guide AI responses:</p>
+    <pre><code>{
+  "mission_and_background": "This workspace serves students in grades 6-12 in Abu Dhabi. Focus on STEM subjects aligned with ADEK curriculum standards. Encourage critical thinking and problem-solving skills."
+}</code></pre>
+
+    <h4>Grade-Level Prompts</h4>
+    <p>Customize AI behavior based on student grade:</p>
+    <pre><code>{
+  "grade_level_prompts": [
+    {
+      "grade_levels": ["6", "7"],
+      "prompt": "Use simple vocabulary and concrete examples. Break complex concepts into smaller steps."
+    },
+    {
+      "grade_levels": ["8", "9"],
+      "prompt": "Introduce more abstract concepts. Encourage students to make connections between topics."
+    },
+    {
+      "grade_levels": ["10", "11", "12"],
+      "prompt": "Use academic vocabulary. Challenge students with higher-order thinking questions."
+    }
+  ]
+}</code></pre>
+
+    <h4>Response Style</h4>
+    <p>Control AI response verbosity per activity:</p>
+    <table>
+      <tr>
+        <th>Style</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td><code>concise</code></td>
+        <td>Brief, direct answers</td>
+      </tr>
+      <tr>
+        <td><code>detailed</code></td>
+        <td>Comprehensive explanations with examples</td>
+      </tr>
+      <tr>
+        <td><code>socratic</code></td>
+        <td>Guided discovery through questions</td>
+      </tr>
+      <tr>
+        <td><code>step_by_step</code></td>
+        <td>Structured, sequential explanations</td>
+      </tr>
+    </table>
+
+    <h3>Moderation Settings</h3>
+    <p>Configure content moderation for student safety:</p>
+    <pre><code>{
+  "moderation_guidelines": "Flag and redirect conversations about self-harm, violence, or inappropriate content. Do not provide answers to test questions directly.",
+  "moderation_notification_categories": [
+    "self_harm",
+    "harassment",
+    "violence"
+  ]
+}</code></pre>
+
+    <h3>Access Controls</h3>
+
+    <h4>IP Allowlist</h4>
+    <p>Restrict access to specific IP ranges:</p>
+    <pre><code>{
+  "allowed_cidrs": [
+    "203.0.113.0/24",
+    "198.51.100.0/24"
+  ]
+}</code></pre>
+
+    <h4>Time-Based Access</h4>
+    <p>Limit student access to specific hours:</p>
+    <pre><code>{
+  "limit_access_hours_enabled": true,
+  "access_start_time": "08:00",
+  "access_end_time": "16:00",
+  "access_days": [1, 2, 3, 4, 5],
+  "timezone": "Asia/Dubai"
+}</code></pre>
+
+    <h3>Visual Customization</h3>
+
+    <h4>Whitelabeling</h4>
+    <table>
+      <tr>
+        <th>Setting</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td>Workspace display name</td>
+      </tr>
+      <tr>
+        <td><code>logo_url</code></td>
+        <td>Custom logo image URL</td>
+      </tr>
+      <tr>
+        <td><code>color</code></td>
+        <td>Primary brand color (hex)</td>
+      </tr>
+    </table>
+
+    <h4>AI Assistant Persona</h4>
+    <p>Customize the AI tutor's identity:</p>
+    <pre><code>{
+  "assistant_name": "Mira",
+  "assistant_avatar_url": "https://example.com/mira-avatar.png",
+  "assistant_greeting": "Marhaba! I'm Mira, your AI learning companion."
+}</code></pre>
+
+    <hr>
+
+    <h2 id="webhooks-events">Webhooks &amp; Events</h2>
+    <p>Receive real-time notifications for important events.</p>
+
+    <h3>Configure Webhook</h3>
+    <div class="endpoint">
+      <span class="method method-post">POST</span>
+      <code>/v1/webhooks</code>
+    </div>
+
+    <pre><code>{
+  "url": "https://your-server.com/flint-webhook",
+  "events": [
+    "chat.created",
+    "chat.completed",
+    "message.sent",
+    "moderation.alert"
+  ],
+  "secret": "your_webhook_secret"
+}</code></pre>
+
+    <h3>Event Types</h3>
+    <table>
+      <tr>
+        <th>Event</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td><code>chat.created</code></td>
+        <td>New chat session started</td>
+      </tr>
+      <tr>
+        <td><code>chat.completed</code></td>
+        <td>Chat session ended</td>
+      </tr>
+      <tr>
+        <td><code>message.sent</code></td>
+        <td>Message sent (user or assistant)</td>
+      </tr>
+      <tr>
+        <td><code>moderation.alert</code></td>
+        <td>Content flagged by moderation</td>
+      </tr>
+      <tr>
+        <td><code>activity.started</code></td>
+        <td>Student began an activity</td>
+      </tr>
+      <tr>
+        <td><code>activity.completed</code></td>
+        <td>Student completed an activity</td>
+      </tr>
+    </table>
+
+    <h3>Webhook Payload Example</h3>
+    <pre><code>{
+  "event": "moderation.alert",
+  "timestamp": "2026-04-29T14:30:00Z",
+  "data": {
+    "chat_id": "chat_def456",
+    "message_id": "msg_xyz789",
+    "user_id": "student_123",
+    "category": "self_harm",
+    "severity": "high",
+    "action_taken": "response_blocked"
+  }
+}</code></pre>
+
+    <hr>
+
+    <h2 id="rate-limits-best-practices">Rate Limits &amp; Best Practices</h2>
+
+    <h3>Rate Limits</h3>
+    <table>
+      <tr>
+        <th>Endpoint</th>
+        <th>Limit</th>
+      </tr>
+      <tr>
+        <td>Messages API</td>
+        <td>100 requests/minute</td>
+      </tr>
+      <tr>
+        <td>Chat Operations</td>
+        <td>60 requests/minute</td>
+      </tr>
+      <tr>
+        <td>Activity Reads</td>
+        <td>120 requests/minute</td>
+      </tr>
+      <tr>
+        <td>Workspace Updates</td>
+        <td>10 requests/minute</td>
+      </tr>
+    </table>
+
+    <h3>Best Practices</h3>
+    <ol>
+      <li><strong>Use Streaming</strong>: For AI responses, always use streaming mode to provide real-time feedback to students.</li>
+      <li><strong>Cache Activity Data</strong>: Activities change infrequently; cache them locally to reduce API calls.</li>
+      <li><strong>Handle Reconnections</strong>: Implement exponential backoff for failed requests.</li>
+      <li><strong>Batch Operations</strong>: Use batch endpoints when fetching multiple resources.</li>
+      <li><strong>Webhook Verification</strong>: Always verify webhook signatures to ensure authenticity.</li>
+    </ol>
+
+    <hr>
+
+    <h2 id="error-handling">Error Handling</h2>
+
+    <h3>Error Response Format</h3>
+    <pre><code>{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "The 'content' field is required",
+    "details": {
+      "field": "content",
+      "reason": "missing_required_field"
+    }
+  }
+}</code></pre>
+
+    <h3>Error Codes</h3>
+    <table>
+      <tr>
+        <th>Code</th>
+        <th>HTTP Status</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td><code>UNAUTHORIZED</code></td>
+        <td>401</td>
+        <td>Invalid or missing API key</td>
+      </tr>
+      <tr>
+        <td><code>FORBIDDEN</code></td>
+        <td>403</td>
+        <td>Insufficient permissions</td>
+      </tr>
+      <tr>
+        <td><code>NOT_FOUND</code></td>
+        <td>404</td>
+        <td>Resource not found</td>
+      </tr>
+      <tr>
+        <td><code>RATE_LIMITED</code></td>
+        <td>429</td>
+        <td>Too many requests</td>
+      </tr>
+      <tr>
+        <td><code>INVALID_REQUEST</code></td>
+        <td>400</td>
+        <td>Malformed request body</td>
+      </tr>
+      <tr>
+        <td><code>SERVER_ERROR</code></td>
+        <td>500</td>
+        <td>Internal server error</td>
+      </tr>
+    </table>
+
+    <hr>
+
+    <h2 id="support">Support</h2>
+    <p>For technical support and integration assistance:</p>
+    <ul>
+      <li><strong>Email</strong>: <a href="mailto:support@flintk12.com">support@flintk12.com</a></li>
+      <li><strong>Documentation</strong>: <a href="https://docs.flintk12.com">https://docs.flintk12.com</a></li>
+      <li><strong>Status Page</strong>: <a href="https://status.flintk12.com">https://status.flintk12.com</a></li>
+    </ul>
+
+    <hr>
+
+    <p><em>This documentation is subject to updates. Last revised: April 2026</em></p>
+  </div>
+</body>
+</html>
