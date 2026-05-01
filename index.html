@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flint AI Platform - API Integration Guide</title>
+  <title>Flint API Spec</title>
   <link rel="icon" href="https://app.flintk12.com/favicon.ico">
   <style>
     * {
@@ -20,7 +20,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 40px 24px;
     }
@@ -43,7 +43,7 @@
     }
 
     h3 {
-      font-size: 1.35rem;
+      font-size: 1.3rem;
       font-weight: 600;
       margin-top: 2rem;
       margin-bottom: 0.75rem;
@@ -51,9 +51,9 @@
     }
 
     h4 {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      margin-top: 1.5rem;
+      margin-top: 1.25rem;
       margin-bottom: 0.5rem;
       color: #444;
     }
@@ -95,6 +95,7 @@
       border: 1px solid #e0e0e0;
       padding: 10px 14px;
       text-align: left;
+      vertical-align: top;
     }
 
     th {
@@ -112,7 +113,7 @@
     }
 
     li {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.45rem;
     }
 
     hr {
@@ -155,6 +156,22 @@
       border-radius: 0 4px 4px 0;
     }
 
+    .operation {
+      border: 1px solid #e6e6e6;
+      border-radius: 10px;
+      padding: 16px 18px 6px;
+      margin: 1rem 0 1.25rem;
+      background: #fcfcfc;
+    }
+
+    .operation .endpoint {
+      margin-top: 0;
+    }
+
+    .operation h4 {
+      margin-top: 1rem;
+    }
+
     .endpoint code {
       background: none;
       font-weight: 600;
@@ -188,11 +205,11 @@
       }
 
       h1 {
-        font-size: 1.75rem;
+        font-size: 1.85rem;
       }
 
       h2 {
-        font-size: 1.4rem;
+        font-size: 1.45rem;
       }
 
       pre {
@@ -212,10 +229,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>Flint AI Platform - API Integration Guide</h1>
+    <h1>Flint API Spec</h1>
 
     <h2 id="overview">Overview</h2>
-    <p>Flint provides a comprehensive API for integrating AI-powered tutoring capabilities into your educational platform. This document covers authentication, core endpoints, customization options, and integration patterns.</p>
+    <p>This document outlines an external API shape for education platforms that need to provision and manage Flint resources inside a larger product. The integration model is hierarchical: districts contain workspaces, workspaces contain terms, terms contain groups, and groups or terms contain activities and chats.</p>
+    <div class="note">
+      Flint is actively evolving, so the API surface described here is subject to refinement during implementation. This guide focuses on the customer-facing CRUD surface only: districts, workspaces, terms, groups, activities, and chats.
+    </div>
 
     <hr>
 
@@ -223,672 +243,1215 @@
     <nav class="toc">
       <ol>
         <li><a href="#authentication">Authentication</a></li>
-        <li><a href="#integration-options">Integration Options</a></li>
-        <li><a href="#core-apis">Core APIs</a></li>
-        <li><a href="#interactive-tools">Interactive Tools</a></li>
-        <li><a href="#customization-configuration">Customization &amp; Configuration</a></li>
-        <li><a href="#webhooks-events">Webhooks &amp; Events</a></li>
-        <li><a href="#rate-limits-best-practices">Rate Limits &amp; Best Practices</a></li>
+        <li><a href="#conventions">Conventions</a></li>
+        <li><a href="#hierarchy">Resource Hierarchy</a></li>
+        <li><a href="#districts">Districts</a></li>
+        <li><a href="#workspaces">Workspaces</a></li>
+        <li><a href="#terms">Terms</a></li>
+        <li><a href="#groups">Groups</a></li>
+        <li><a href="#activities">Activities</a></li>
+        <li><a href="#chats">Chats</a></li>
+        <li><a href="#errors">Error Handling</a></li>
       </ol>
     </nav>
 
     <hr>
 
     <h2 id="authentication">Authentication</h2>
+    <p>The authentication model supports both service-to-service access and user-context access.</p>
 
-    <h3>API Key Authentication</h3>
-    <p>External partners authenticate using API keys issued per workspace. Include the key in all requests:</p>
+    <h3>Service Account Authentication</h3>
+    <p>Administrative provisioning and synchronization calls would typically use bearer token authentication.</p>
     <pre><code>Authorization: Bearer &lt;API_KEY&gt;</code></pre>
 
-    <h3>Service Account</h3>
-    <p>Each integration is associated with a service account that determines:</p>
-    <ul>
-      <li>Accessible workspaces and resources</li>
-      <li>Permission levels (read, write, admin)</li>
-      <li>Rate limits and quotas</li>
-    </ul>
+    <h3>OAuth 2.0 / SSO</h3>
+    <p>For user-context experiences, Flint can support OAuth 2.0 based SSO. The expected model is authorization code flow for server-rendered apps and PKCE for web or mobile clients.</p>
+    <p>This would allow a partner platform to launch Flint in the context of an authenticated end user without requiring separate sign-in.</p>
 
-    <h3>OAuth 2.0 (SSO Integration)</h3>
-    <p>For user-context operations, Flint supports OAuth 2.0 with the following grant types:</p>
-    <ul>
-      <li>Authorization Code (web apps)</li>
-      <li>PKCE (mobile/SPA apps)</li>
-    </ul>
+    <p>Tokens would be scoped to the partner account and authorized resources. Write operations would typically be limited to administrative service accounts.</p>
 
     <hr>
 
-    <h2 id="integration-options">Integration Options</h2>
-
-    <h3>Option 1: API Integration</h3>
-    <p>Direct API calls for full control over the user experience. Best for:</p>
-    <ul>
-      <li>Building custom chat interfaces</li>
-      <li>Embedding AI responses in your existing UI</li>
-      <li>Programmatic access to analytics and content</li>
-    </ul>
-
-    <h3>Option 2: iFrame Embed</h3>
-    <p>Embed the Flint experience directly in your platform:</p>
-    <pre><code>&lt;iframe
-  src="https://app.flintk12.com/embed/{workspace_id}?theme=light"
-  width="100%"
-  height="600px"
-  allow="microphone; clipboard-write"
-&gt;&lt;/iframe&gt;</code></pre>
-
-    <p><strong>Customization parameters:</strong></p>
-    <table>
-      <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-        <th>Values</th>
-      </tr>
-      <tr>
-        <td><code>theme</code></td>
-        <td>UI color scheme</td>
-        <td><code>light</code>, <code>dark</code>, <code>auto</code></td>
-      </tr>
-      <tr>
-        <td><code>locale</code></td>
-        <td>Interface language</td>
-        <td><code>en</code>, <code>ar</code>, <code>es</code>, etc.</td>
-      </tr>
-      <tr>
-        <td><code>hide_header</code></td>
-        <td>Hide navigation header</td>
-        <td><code>true</code>, <code>false</code></td>
-      </tr>
-      <tr>
-        <td><code>activity_id</code></td>
-        <td>Pre-load specific activity</td>
-        <td>Activity UUID</td>
-      </tr>
-    </table>
-
-    <h3>Option 3: Whitelabel Solution</h3>
-    <p>Full visual customization including:</p>
-    <ul>
-      <li>Custom domain (e.g., <code>tutor.adek.ae</code>)</li>
-      <li>Custom logo and branding</li>
-      <li>AI assistant name and avatar</li>
-      <li>Custom color scheme</li>
-    </ul>
-
-    <hr>
-
-    <h2 id="core-apis">Core APIs</h2>
+    <h2 id="conventions">Conventions</h2>
 
     <h3>Base URL</h3>
     <pre><code>https://api.flintk12.com/v1</code></pre>
+    <p>This base URL is illustrative and represents the intended external API namespace.</p>
 
-    <hr>
-
-    <h3 id="messages-api">Messages API</h3>
-    <p>The Messages API is the core interface for AI tutoring interactions. Send student messages and receive AI tutor responses.</p>
-
-    <h4>Send Message</h4>
-    <div class="endpoint">
-      <span class="method method-post">POST</span>
-      <code>/v1/chats/{chat_id}/messages</code>
-    </div>
-
-    <pre><code>POST /v1/chats/{chat_id}/messages
-Content-Type: application/json
-Authorization: Bearer &lt;API_KEY&gt;
-
-{
-  "content": {
-    "type": "text",
-    "text": "Can you explain the Pythagorean theorem?"
-  },
-  "user_id": "student_123",
-  "metadata": {
-    "grade_level": "8",
-    "subject": "mathematics"
-  }
-}</code></pre>
-
-    <p><strong>Response (Streaming):</strong></p>
-    <p>The response is delivered as Server-Sent Events (SSE) for real-time streaming:</p>
-    <pre><code>event: message_start
-data: {"message_id": "msg_abc123", "type": "assistant"}
-
-event: content_delta
-data: {"text": "The Pythagorean theorem states that"}
-
-event: content_delta
-data: {"text": " in a right triangle, a² + b² = c²"}
-
-event: tool_use
-data: {"tool": "whiteboard", "action": "draw_triangle"}
-
-event: message_end
-data: {"finish_reason": "complete", "usage": {"input_tokens": 150, "output_tokens": 320}}</code></pre>
-
-    <h4>Content Types</h4>
-    <p>Messages can include various content types:</p>
+    <h3>CRUD Semantics</h3>
     <table>
       <tr>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Example Use Case</th>
+        <th>Operation</th>
+        <th>Pattern</th>
       </tr>
       <tr>
-        <td><code>text</code></td>
-        <td>Plain text message</td>
-        <td>Student questions, explanations</td>
+        <td>List</td>
+        <td><code>GET /v1/{resource}</code></td>
       </tr>
       <tr>
-        <td><code>image</code></td>
-        <td>Generated or uploaded images</td>
-        <td>Visual aids, diagrams</td>
+        <td>Read</td>
+        <td><code>GET /v1/{resource}/{id}</code></td>
       </tr>
       <tr>
-        <td><code>code</code></td>
-        <td>Code snippets with execution</td>
-        <td>Programming lessons</td>
+        <td>Create</td>
+        <td><code>POST /v1/{resource}</code></td>
       </tr>
       <tr>
-        <td><code>whiteboard</code></td>
-        <td>Interactive drawing canvas</td>
-        <td>Math problems, diagrams</td>
+        <td>Update</td>
+        <td><code>PUT /v1/{resource}/{id}</code></td>
       </tr>
       <tr>
-        <td><code>document</code></td>
-        <td>PDF/Word documents</td>
-        <td>Essay review, worksheets</td>
-      </tr>
-      <tr>
-        <td><code>presentation</code></td>
-        <td>Slide decks</td>
-        <td>Lesson summaries</td>
-      </tr>
-      <tr>
-        <td><code>video</code></td>
-        <td>Generated educational videos</td>
-        <td>Concept explanations</td>
-      </tr>
-      <tr>
-        <td><code>audio</code></td>
-        <td>Voice messages</td>
-        <td>Pronunciation, listening</td>
+        <td>Delete</td>
+        <td><code>DELETE /v1/{resource}/{id}</code></td>
       </tr>
     </table>
 
-    <h4>Example: Multi-modal Message</h4>
-    <pre><code>{
-  "content": [
-    {
-      "type": "text",
-      "text": "Here's my attempt at solving this problem:"
-    },
-    {
-      "type": "image",
-      "source_url": "https://example.com/student-work.jpg"
-    }
-  ],
-  "user_id": "student_123"
-}</code></pre>
+    <p>In this lifecycle model, delete operations generally begin as soft deletion using <code>deleted_at</code>. Rows may then be permanently removed after the applicable data retention period.</p>
 
-    <hr>
+    <h3>Timestamps</h3>
+    <p>All timestamps use ISO 8601 UTC strings.</p>
 
-    <h3 id="chats-api">Chats API</h3>
-    <p>Manage conversation sessions between students and the AI tutor.</p>
+    <h3>Pagination</h3>
+    <p>List endpoints are expected to support <code>limit</code> and <code>offset</code>.</p>
 
-    <h4>Create Chat</h4>
-    <div class="endpoint">
-      <span class="method method-post">POST</span>
-      <code>/v1/chats</code>
-    </div>
+    <h3>Request and Response Shape</h3>
+    <p>Write requests and single-resource responses use a resource-specific wrapper such as <code>{ "workspace": { ... } }</code> or <code>{ "activity": { ... } }</code>. List responses use <code>{ "data": [...], "pagination": { ... } }</code>.</p>
 
-    <pre><code>POST /v1/chats
-Content-Type: application/json
-
-{
-  "workspace_id": "ws_abc123",
-  "user_id": "student_123",
-  "activity_id": "act_xyz789",
-  "metadata": {
-    "grade_levels": ["7", "8"],
-    "subject": "science"
-  }
-}</code></pre>
-
-    <p><strong>Response:</strong></p>
-    <pre><code>{
-  "id": "chat_def456",
-  "created_at": "2026-04-29T10:30:00Z",
-  "workspace_id": "ws_abc123",
-  "activity_id": "act_xyz789",
-  "user_id": "student_123",
-  "status": "active"
-}</code></pre>
-
-    <h4>Get Chat</h4>
-    <div class="endpoint">
-      <span class="method method-get">GET</span>
-      <code>/v1/chats/{chat_id}</code>
-    </div>
-
-    <p><strong>Response:</strong></p>
-    <pre><code>{
-  "id": "chat_def456",
-  "created_at": "2026-04-29T10:30:00Z",
-  "workspace_id": "ws_abc123",
-  "messages": [
-    {
-      "id": "msg_001",
-      "role": "user",
-      "created_at": "2026-04-29T10:30:15Z",
-      "contents": [
-        {
-          "type": "text",
-          "text": "What is photosynthesis?"
-        }
-      ]
-    },
-    {
-      "id": "msg_002",
-      "role": "assistant",
-      "created_at": "2026-04-29T10:30:18Z",
-      "contents": [
-        {
-          "type": "text",
-          "text": "Great question! Photosynthesis is the process by which plants convert sunlight into energy..."
-        },
-        {
-          "type": "image",
-          "source_url": "https://cdn.flintk12.com/generated/photosynthesis-diagram.png",
-          "name": "Photosynthesis Diagram"
-        }
-      ]
-    }
-  ],
-  "analysis": {
-    "topics_covered": ["biology", "photosynthesis"],
-    "engagement_score": 0.85
-  }
-}</code></pre>
-
-    <h4>List Chats</h4>
-    <div class="endpoint">
-      <span class="method method-get">GET</span>
-      <code>/v1/chats?user_id=student_123&amp;limit=20&amp;offset=0</code>
-    </div>
-
-    <hr>
-
-    <h3 id="activities-api">Activities API</h3>
-    <p>Activities are structured lessons or assignments that guide AI interactions.</p>
-
-    <h4>List Activities</h4>
-    <div class="endpoint">
-      <span class="method method-get">GET</span>
-      <code>/v1/activities?workspace_id=ws_abc123</code>
-    </div>
-
-    <p><strong>Response:</strong></p>
-    <pre><code>{
-  "data": [
-    {
-      "id": "act_xyz789",
-      "name": "Introduction to Algebra",
-      "description": "Learn the basics of algebraic expressions",
-      "subject": "mathematics",
-      "grade_level": "7",
-      "estimated_time": 30,
-      "response_style": "detailed",
-      "is_published": true
-    }
-  ],
-  "pagination": {
-    "total": 45,
-    "limit": 20,
-    "offset": 0
-  }
-}</code></pre>
-
-    <h4>Get Activity</h4>
-    <div class="endpoint">
-      <span class="method method-get">GET</span>
-      <code>/v1/activities/{activity_id}</code>
-    </div>
-
-    <p><strong>Response:</strong></p>
-    <pre><code>{
-  "id": "act_xyz789",
-  "name": "Introduction to Algebra",
-  "description": "Learn the basics of algebraic expressions",
-  "guidelines": "Focus on building intuition before formulas. Use visual representations.",
-  "initial_message": "Hi! Today we're going to explore algebra. What do you already know about using letters to represent numbers?",
-  "subject": "mathematics",
-  "grade_level": "7",
-  "response_style": "detailed",
-  "tools_enabled": ["whiteboard", "code"],
-  "created_at": "2026-03-15T09:00:00Z",
-  "updated_at": "2026-04-20T14:30:00Z"
-}</code></pre>
-
-    <hr>
-
-    <h2 id="interactive-tools">Interactive Tools</h2>
-    <p>The AI tutor can invoke various tools during conversations to enhance learning:</p>
-
-    <h3>Whiteboard</h3>
-    <p>Interactive canvas for visual explanations and student work.</p>
-    <pre><code>{
-  "tool": "whiteboard",
-  "parameters": {
-    "action": "create",
-    "template": "coordinate_plane"
-  }
-}</code></pre>
-
-    <h3>Code Execution</h3>
-    <p>Run Python or JavaScript code with real-time output.</p>
-    <pre><code>{
-  "tool": "code",
-  "parameters": {
-    "language": "python",
-    "code": "import matplotlib.pyplot as plt\nplt.plot([1, 2, 3], [1, 4, 9])\nplt.show()"
-  }
-}</code></pre>
-
-    <p><strong>Supported Languages:</strong></p>
-    <ul>
-      <li>Python (with NumPy, Pandas, Matplotlib)</li>
-      <li>JavaScript</li>
-    </ul>
-
-    <h3>Image Generation</h3>
-    <p>Create educational visuals on-demand.</p>
-    <pre><code>{
-  "tool": "image",
-  "parameters": {
-    "prompt": "A labeled diagram of a plant cell showing organelles",
-    "style": "educational_diagram"
-  }
-}</code></pre>
-
-    <h3>Visualizations</h3>
-    <p>Generate charts and graphs from data.</p>
-    <pre><code>{
-  "tool": "visualization",
-  "parameters": {
-    "type": "bar_chart",
-    "data": {"labels": ["A", "B", "C"], "values": [10, 25, 15]},
-    "title": "Student Survey Results"
-  }
-}</code></pre>
-
-    <h3>Presentations</h3>
-    <p>Generate slide decks for lesson summaries.</p>
-    <pre><code>{
-  "tool": "presentation",
-  "parameters": {
-    "topic": "The Water Cycle",
-    "slides": 5,
-    "theme": "professional"
-  }
-}</code></pre>
-
-    <hr>
-
-    <h2 id="customization-configuration">Customization &amp; Configuration</h2>
-
-    <h3>Workspace Settings</h3>
-    <p>Configure workspace-level settings via API:</p>
-
-    <div class="endpoint">
-      <span class="method method-put">PUT</span>
-      <code>/v1/workspaces/{workspace_id}</code>
-    </div>
-
-    <pre><code>{
-  "name": "ADEK AI Tutor",
-  "logo_url": "https://example.com/adek-logo.png",
-  "color": "#1B4D8C",
-  "timezone": "Asia/Dubai",
-  "mission_and_background": "We are committed to providing personalized, culturally-aware education aligned with UAE national curriculum standards...",
-  "moderation_guidelines": "Ensure all responses are appropriate for K-12 students and aligned with UAE cultural values..."
-}</code></pre>
-
-    <h3>AI Behavior Customization</h3>
-
-    <h4>Mission &amp; Background</h4>
-    <p>Define the educational context and values that guide AI responses:</p>
-    <pre><code>{
-  "mission_and_background": "This workspace serves students in grades 6-12 in Abu Dhabi. Focus on STEM subjects aligned with ADEK curriculum standards. Encourage critical thinking and problem-solving skills."
-}</code></pre>
-
-    <h4>Grade-Level Prompts</h4>
-    <p>Customize AI behavior based on student grade:</p>
-    <pre><code>{
-  "grade_level_prompts": [
-    {
-      "grade_levels": ["6", "7"],
-      "prompt": "Use simple vocabulary and concrete examples. Break complex concepts into smaller steps."
-    },
-    {
-      "grade_levels": ["8", "9"],
-      "prompt": "Introduce more abstract concepts. Encourage students to make connections between topics."
-    },
-    {
-      "grade_levels": ["10", "11", "12"],
-      "prompt": "Use academic vocabulary. Challenge students with higher-order thinking questions."
-    }
-  ]
-}</code></pre>
-
-    <h4>Response Style</h4>
-    <p>Control AI response verbosity per activity:</p>
+    <h3>Common Fields</h3>
     <table>
       <tr>
-        <th>Style</th>
-        <th>Description</th>
+        <th>Field</th>
+        <th>Meaning</th>
       </tr>
       <tr>
-        <td><code>concise</code></td>
-        <td>Brief, direct answers</td>
-      </tr>
-      <tr>
-        <td><code>detailed</code></td>
-        <td>Comprehensive explanations with examples</td>
-      </tr>
-      <tr>
-        <td><code>socratic</code></td>
-        <td>Guided discovery through questions</td>
-      </tr>
-      <tr>
-        <td><code>step_by_step</code></td>
-        <td>Structured, sequential explanations</td>
-      </tr>
-    </table>
-
-    <h3>Moderation Settings</h3>
-    <p>Configure content moderation for student safety:</p>
-    <pre><code>{
-  "moderation_guidelines": "Flag and redirect conversations about self-harm, violence, or inappropriate content. Do not provide answers to test questions directly.",
-  "moderation_notification_categories": [
-    "self_harm",
-    "harassment",
-    "violence"
-  ]
-}</code></pre>
-
-    <h3>Access Controls</h3>
-
-    <h4>IP Allowlist</h4>
-    <p>Restrict access to specific IP ranges:</p>
-    <pre><code>{
-  "allowed_cidrs": [
-    "203.0.113.0/24",
-    "198.51.100.0/24"
-  ]
-}</code></pre>
-
-    <h4>Time-Based Access</h4>
-    <p>Limit student access to specific hours:</p>
-    <pre><code>{
-  "limit_access_hours_enabled": true,
-  "access_start_time": "08:00",
-  "access_end_time": "16:00",
-  "access_days": [1, 2, 3, 4, 5],
-  "timezone": "Asia/Dubai"
-}</code></pre>
-
-    <h3>Visual Customization</h3>
-
-    <h4>Whitelabeling</h4>
-    <table>
-      <tr>
-        <th>Setting</th>
-        <th>Description</th>
+        <td><code>id</code></td>
+        <td>Stable unique identifier for the resource.</td>
       </tr>
       <tr>
         <td><code>name</code></td>
-        <td>Workspace display name</td>
+        <td>Primary human-readable label for the resource where applicable.</td>
+      </tr>
+      <tr>
+        <td><code>creator_id</code></td>
+        <td>Identifies the user or service account that originally created the resource.</td>
+      </tr>
+      <tr>
+        <td><code>visibility</code></td>
+        <td>Controls whether a resource is hidden, unlisted, or broadly accessible within the tenant.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>Marks a resource for deletion before any later retention-based hard delete.</td>
+      </tr>
+    </table>
+
+    <hr>
+
+    <h2 id="hierarchy">Resource Hierarchy</h2>
+    <pre><code>district
+├── workspace
+│   ├── term
+│   │   ├── group
+│   │   │   ├── group
+│   │   │   ├── activities
+│   │   │   │   └── chats
+│   │   │   └── chats
+│   │   ├── activities
+│   │   │   └── chats
+│   │   └── chats
+│   └── activities   (optional library scope)
+└── activities       (optional library scope)</code></pre>
+
+    <p>Under the current Flint data model, a chat belongs to exactly one parent: <code>term</code>, <code>group</code>, or <code>activity</code>. An activity can belong to a <code>group</code>, a <code>term</code>, and in broader platform scenarios may also exist at workspace or district scope.</p>
+    <p>In this model, a workspace has an <code>active_term_id</code>. Workspace creation would also provision a default term and return both identifiers.</p>
+
+    <hr>
+
+    <h2 id="districts">Districts</h2>
+    <p>Districts are the top-level organizational container for a multi-workspace deployment.</p>
+
+    <h3>Endpoints</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/districts</code></div>
+    <p>Lists districts available to the partner. Supports standard pagination such as <code>limit</code> and <code>offset</code>.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "data": [
+    {
+      "id": "district_public_school_network",
+      "creator_id": "usr_admin_001",
+      "name": "Public School Network",
+      "tagline": "Unified AI learning platform",
+      ...
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/districts/{district_id}</code></div>
+    <p>Returns one district object by ID.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "district": {
+    "id": "district_public_school_network",
+    "creator_id": "usr_admin_001",
+    "name": "Public School Network",
+    "tagline": "Unified AI learning platform",
+    "organization_context": "Provide consistent, high-quality AI-supported learning across district-managed schools.",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/districts</code></div>
+    <p>Creates a district using a body shaped like <code>{ "district": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "district": {
+    "id": "district_public_school_network",
+    "creator_id": "usr_admin_001",
+    "name": "Public School Network",
+    "tagline": "Unified AI learning platform",
+    "organization_context": "Provide consistent, high-quality AI-supported learning across district-managed schools.",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "district": {
+    "id": "district_public_school_network",
+    "creator_id": "usr_admin_001",
+    "name": "Public School Network",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-put">PUT</span><code>/v1/districts/{district_id}</code></div>
+    <p>Updates district metadata using a body shaped like <code>{ "district": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "district": {
+    "tagline": "AI learning platform for all schools",
+    "organization_context": "Provide curriculum-aligned AI support across district-managed schools."
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "district": {
+    "id": "district_public_school_network",
+    "creator_id": "usr_admin_001",
+    "tagline": "AI learning platform for all schools",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <h3>Fields</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td><code>id</code></td>
+        <td>string</td>
+        <td>Stable district identifier.</td>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td>string</td>
+        <td>District display name.</td>
+      </tr>
+      <tr>
+        <td><code>tagline</code></td>
+        <td>string</td>
+        <td>Short descriptor shown in Flint surfaces.</td>
       </tr>
       <tr>
         <td><code>logo_url</code></td>
-        <td>Custom logo image URL</td>
+        <td>string | null</td>
+        <td>District logo.</td>
+      </tr>
+      <tr>
+        <td><code>custom_branding_enabled</code></td>
+        <td>boolean</td>
+        <td>Enables district-level branding behavior.</td>
+      </tr>
+      <tr>
+        <td><code>organization_context</code></td>
+        <td>string</td>
+        <td>High-level instructional or organizational context.</td>
+      </tr>
+      <tr>
+        <td><code>creator_id</code></td>
+        <td>string</td>
+        <td>Administrative owner at creation time.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Soft deletion marker.</td>
+      </tr>
+    </table>
+
+    <hr>
+
+    <h2 id="workspaces">Workspaces</h2>
+    <p>Workspaces are the primary tenant unit for managing schools, programs, or institution-level deployments.</p>
+
+    <h3>Endpoints</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/workspaces</code></div>
+    <p>Lists workspaces. Typical filters include <code>district_id</code> together with pagination parameters.</p>
+    <h4>Example Request</h4>
+    <pre><code>GET /v1/workspaces?district_id=district_public_school_network&amp;limit=20&amp;offset=0</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "data": [
+    {
+      "id": "ws_central_secondary",
+      "creator_id": "usr_admin_001",
+      "district_id": "district_public_school_network",
+      "name": "Central Secondary Schools",
+      ...
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/workspaces/{workspace_id}</code></div>
+    <p>Returns one workspace object by ID.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "workspace": {
+    "id": "ws_central_secondary",
+    "creator_id": "usr_admin_001",
+    "district_id": "district_public_school_network",
+    "active_term_id": "term_default_2026",
+    "name": "Central Secondary Schools",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/workspaces</code></div>
+    <p>Creates a workspace and provisions its default term using a body shaped like <code>{ "workspace": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "workspace": {
+    "creator_id": "usr_admin_001",
+    "name": "Central Secondary Schools",
+    "district_id": "district_public_school_network",
+    "visibility": "unlisted",
+    "timezone": "UTC",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "workspace": {
+    "id": "ws_central_secondary",
+    "creator_id": "usr_admin_001",
+    "active_term_id": "term_default_2026",
+    "name": "Central Secondary Schools",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-put">PUT</span><code>/v1/workspaces/{workspace_id}</code></div>
+    <p>Updates workspace settings using a body shaped like <code>{ "workspace": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "workspace": {
+    "timezone": "UTC",
+    "organization_context": "Support multilingual, curriculum-aligned tutoring for grades 6-12.",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "workspace": {
+    "id": "ws_central_secondary",
+    "creator_id": "usr_admin_001",
+    "timezone": "UTC",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-delete">DELETE</span><code>/v1/workspaces/{workspace_id}</code></div>
+    <p>Deletes or deactivates a workspace. Final implementation may use soft-delete semantics.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "workspace": {
+    "id": "ws_central_secondary",
+    "creator_id": "usr_admin_001",
+    "deleted_at": "2026-04-30T15:00:00Z",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <h3>Fields</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td><code>id</code></td>
+        <td>string</td>
+        <td>Stable workspace identifier.</td>
+      </tr>
+      <tr>
+        <td><code>district_id</code></td>
+        <td>string | null</td>
+        <td>Optional parent district.</td>
+      </tr>
+      <tr>
+        <td><code>active_term_id</code></td>
+        <td>string</td>
+        <td>Currently active term for the workspace.</td>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td>string</td>
+        <td>Workspace display name.</td>
       </tr>
       <tr>
         <td><code>color</code></td>
-        <td>Primary brand color (hex)</td>
+        <td>string</td>
+        <td>Primary workspace brand color.</td>
+      </tr>
+      <tr>
+        <td><code>logo_url</code></td>
+        <td>string | null</td>
+        <td>Workspace logo.</td>
+      </tr>
+      <tr>
+        <td><code>visibility</code></td>
+        <td>enum</td>
+        <td>Workspace discovery/access posture.</td>
+      </tr>
+      <tr>
+        <td><code>timezone</code></td>
+        <td>string | null</td>
+        <td>Used for scheduling and access windows.</td>
+      </tr>
+      <tr>
+        <td><code>organization_context</code></td>
+        <td>string</td>
+        <td>Default instructional context.</td>
+      </tr>
+      <tr>
+        <td><code>grade_level_prompts</code></td>
+        <td>array&lt;object&gt;</td>
+        <td>Grade-specific prompt customizations.</td>
+      </tr>
+      <tr>
+        <td><code>moderation_guidelines</code></td>
+        <td>string</td>
+        <td>Tenant moderation policy text.</td>
+      </tr>
+      <tr>
+        <td><code>moderation_alert_types</code></td>
+        <td>array&lt;string&gt;</td>
+        <td>Moderation event categories to notify on.</td>
+      </tr>
+      <tr>
+        <td><code>allowed_ip_ranges</code></td>
+        <td>array&lt;string&gt;</td>
+        <td>Optional network allowlist.</td>
+      </tr>
+      <tr>
+        <td><code>access_schedule_enabled</code></td>
+        <td>boolean</td>
+        <td>Enables time-based access restrictions.</td>
+      </tr>
+      <tr>
+        <td><code>access_window_start_time</code></td>
+        <td>string | null</td>
+        <td>Access window start.</td>
+      </tr>
+      <tr>
+        <td><code>access_window_end_time</code></td>
+        <td>string | null</td>
+        <td>Access window end.</td>
+      </tr>
+      <tr>
+        <td><code>access_window_days</code></td>
+        <td>array&lt;string&gt;</td>
+        <td>Allowed days of week.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Managed by dedicated delete flow.</td>
       </tr>
     </table>
-
-    <h4>AI Assistant Persona</h4>
-    <p>Customize the AI tutor's identity:</p>
-    <pre><code>{
-  "assistant_name": "Mira",
-  "assistant_avatar_url": "https://example.com/mira-avatar.png",
-  "assistant_greeting": "Marhaba! I'm Mira, your AI learning companion."
-}</code></pre>
 
     <hr>
 
-    <h2 id="webhooks-events">Webhooks &amp; Events</h2>
-    <p>Receive real-time notifications for important events.</p>
+    <h2 id="terms">Terms</h2>
+    <p>Terms model academic periods such as semesters, trimesters, or school years.</p>
 
-    <h3>Configure Webhook</h3>
-    <div class="endpoint">
-      <span class="method method-post">POST</span>
-      <code>/v1/webhooks</code>
-    </div>
-
+    <h3>Endpoints</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/terms</code></div>
+    <p>Lists terms. Typical filters include <code>workspace_id</code> together with pagination parameters.</p>
+    <h4>Example Request</h4>
+    <pre><code>GET /v1/terms?workspace_id=ws_central_secondary&amp;limit=20&amp;offset=0</code></pre>
+    <h4>Example Response</h4>
     <pre><code>{
-  "url": "https://your-server.com/flint-webhook",
-  "events": [
-    "chat.created",
-    "chat.completed",
-    "message.sent",
-    "moderation.alert"
+  "data": [
+    {
+      "id": "term_fall_2026",
+      "creator_id": "usr_admin_001",
+      "workspace_id": "ws_central_secondary",
+      "name": "Fall 2026",
+      ...
+    }
   ],
-  "secret": "your_webhook_secret"
-}</code></pre>
-
-    <h3>Event Types</h3>
-    <table>
-      <tr>
-        <th>Event</th>
-        <th>Description</th>
-      </tr>
-      <tr>
-        <td><code>chat.created</code></td>
-        <td>New chat session started</td>
-      </tr>
-      <tr>
-        <td><code>chat.completed</code></td>
-        <td>Chat session ended</td>
-      </tr>
-      <tr>
-        <td><code>message.sent</code></td>
-        <td>Message sent (user or assistant)</td>
-      </tr>
-      <tr>
-        <td><code>moderation.alert</code></td>
-        <td>Content flagged by moderation</td>
-      </tr>
-      <tr>
-        <td><code>activity.started</code></td>
-        <td>Student began an activity</td>
-      </tr>
-      <tr>
-        <td><code>activity.completed</code></td>
-        <td>Student completed an activity</td>
-      </tr>
-    </table>
-
-    <h3>Webhook Payload Example</h3>
-    <pre><code>{
-  "event": "moderation.alert",
-  "timestamp": "2026-04-29T14:30:00Z",
-  "data": {
-    "chat_id": "chat_def456",
-    "message_id": "msg_xyz789",
-    "user_id": "student_123",
-    "category": "self_harm",
-    "severity": "high",
-    "action_taken": "response_blocked"
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
   }
 }</code></pre>
+    </div>
 
-    <hr>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/terms/{term_id}</code></div>
+    <p>Returns one term object by ID.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "term": {
+    "id": "term_fall_2026",
+    "creator_id": "usr_admin_001",
+    "workspace_id": "ws_central_secondary",
+    "name": "Fall 2026",
+    ...
+  }
+}</code></pre>
+    </div>
 
-    <h2 id="rate-limits-best-practices">Rate Limits &amp; Best Practices</h2>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/terms</code></div>
+    <p>Creates a term using a body shaped like <code>{ "term": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "term": {
+    "creator_id": "usr_admin_001",
+    "workspace_id": "ws_central_secondary",
+    "name": "Fall 2026",
+    "start_date": "2026-08-24",
+    "end_date": "2026-12-18",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "term": {
+    "id": "term_fall_2026",
+    "creator_id": "usr_admin_001",
+    "workspace_id": "ws_central_secondary",
+    "name": "Fall 2026",
+    ...
+  }
+}</code></pre>
+    </div>
 
-    <h3>Rate Limits</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-put">PUT</span><code>/v1/terms/{term_id}</code></div>
+    <p>Updates term metadata or lifecycle state using a body shaped like <code>{ "term": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "term": {
+    "visible": true,
+    "end_date": "2026-12-19",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "term": {
+    "id": "term_fall_2026",
+    "creator_id": "usr_admin_001",
+    "workspace_id": "ws_central_secondary",
+    "visible": true,
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/terms/{term_id}/activate</code></div>
+    <p>Marks a term as the active term for its workspace.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "term": {
+    "id": "term_fall_2026",
+    "workspace_id": "ws_central_secondary",
+    "visible": true,
+    ...
+  },
+  "workspace": {
+    "id": "ws_central_secondary",
+    "active_term_id": "term_fall_2026"
+  }
+}</code></pre>
+    </div>
+
+    <h3>Fields</h3>
     <table>
       <tr>
-        <th>Endpoint</th>
-        <th>Limit</th>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Notes</th>
       </tr>
       <tr>
-        <td>Messages API</td>
-        <td>100 requests/minute</td>
+        <td><code>id</code></td>
+        <td>string</td>
+        <td>Stable term identifier.</td>
       </tr>
       <tr>
-        <td>Chat Operations</td>
-        <td>60 requests/minute</td>
+        <td><code>workspace_id</code></td>
+        <td>string</td>
+        <td>Owning workspace.</td>
       </tr>
       <tr>
-        <td>Activity Reads</td>
-        <td>120 requests/minute</td>
+        <td><code>name</code></td>
+        <td>string</td>
+        <td>Term name such as "Fall 2026".</td>
       </tr>
       <tr>
-        <td>Workspace Updates</td>
-        <td>10 requests/minute</td>
+        <td><code>start_date</code></td>
+        <td>date | null</td>
+        <td>Academic start date.</td>
+      </tr>
+      <tr>
+        <td><code>end_date</code></td>
+        <td>date | null</td>
+        <td>Academic end date.</td>
+      </tr>
+      <tr>
+        <td><code>visible</code></td>
+        <td>boolean</td>
+        <td>Whether the term is visible to workspace users.</td>
+      </tr>
+      <tr>
+        <td><code>creator_id</code></td>
+        <td>string</td>
+        <td>Administrative owner.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Soft deletion marker. Active terms cannot be deleted.</td>
       </tr>
     </table>
 
-    <h3>Best Practices</h3>
-    <ol>
-      <li><strong>Use Streaming</strong>: For AI responses, always use streaming mode to provide real-time feedback to students.</li>
-      <li><strong>Cache Activity Data</strong>: Activities change infrequently; cache them locally to reduce API calls.</li>
-      <li><strong>Handle Reconnections</strong>: Implement exponential backoff for failed requests.</li>
-      <li><strong>Batch Operations</strong>: Use batch endpoints when fetching multiple resources.</li>
-      <li><strong>Webhook Verification</strong>: Always verify webhook signatures to ensure authenticity.</li>
-    </ol>
+    <hr>
+
+    <h2 id="groups">Groups</h2>
+    <p>Groups model classes, sections, cohorts, departments, or nested organizational units inside a term.</p>
+
+    <h3>Endpoints</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/groups</code></div>
+    <p>Lists groups. Typical filters include <code>parent_term_id</code> or <code>parent_group_id</code> together with pagination parameters.</p>
+    <h4>Example Request</h4>
+    <pre><code>GET /v1/groups?parent_term_id=term_fall_2026&amp;limit=20&amp;offset=0</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "data": [
+    {
+      "id": "grp_grade8_math_a",
+      "creator_id": "usr_admin_001",
+      "parent_term_id": "term_fall_2026",
+      "name": "Grade 8 Mathematics",
+      ...
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/groups/{group_id}</code></div>
+    <p>Returns one group object by ID.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "group": {
+    "id": "grp_grade8_math_a",
+    "creator_id": "usr_admin_001",
+    "parent_term_id": "term_fall_2026",
+    "name": "Grade 8 Mathematics",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/groups</code></div>
+    <p>Creates a group using a body shaped like <code>{ "group": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "group": {
+    "creator_id": "usr_admin_001",
+    "parent_term_id": "term_fall_2026",
+    "name": "Grade 8 Mathematics",
+    "description": "Section A",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "group": {
+    "id": "grp_grade8_math_a",
+    "creator_id": "usr_admin_001",
+    "parent_term_id": "term_fall_2026",
+    "name": "Grade 8 Mathematics",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-put">PUT</span><code>/v1/groups/{group_id}</code></div>
+    <p>Updates group metadata or lifecycle state using a body shaped like <code>{ "group": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "group": {
+    "description": "Section A - updated",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "group": {
+    "id": "grp_grade8_math_a",
+    "creator_id": "usr_admin_001",
+    "parent_term_id": "term_fall_2026",
+    "description": "Section A - updated",
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <h3>Fields</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td><code>id</code></td>
+        <td>string</td>
+        <td>Stable group identifier.</td>
+      </tr>
+      <tr>
+        <td><code>parent_term_id</code></td>
+        <td>string | null</td>
+        <td>Use for top-level groups under a term.</td>
+      </tr>
+      <tr>
+        <td><code>parent_group_id</code></td>
+        <td>string | null</td>
+        <td>Use for nested groups.</td>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td>string</td>
+        <td>Group name.</td>
+      </tr>
+      <tr>
+        <td><code>creator_id</code></td>
+        <td>string</td>
+        <td>Administrative owner.</td>
+      </tr>
+      <tr>
+        <td><code>description</code></td>
+        <td>string | null</td>
+        <td>Optional description.</td>
+      </tr>
+      <tr>
+        <td><code>color</code></td>
+        <td>string</td>
+        <td>Display color.</td>
+      </tr>
+      <tr>
+        <td><code>visibility</code></td>
+        <td>enum</td>
+        <td>Discovery/access posture.</td>
+      </tr>
+      <tr>
+        <td><code>logo_url</code></td>
+        <td>string | null</td>
+        <td>Optional image.</td>
+      </tr>
+      <tr>
+        <td><code>learning_context</code></td>
+        <td>string</td>
+        <td>Instructional context for the group.</td>
+      </tr>
+      <tr>
+        <td><code>published</code></td>
+        <td>boolean</td>
+        <td>Publication state.</td>
+      </tr>
+      <tr>
+        <td><code>moderation_alert_types</code></td>
+        <td>array&lt;string&gt;</td>
+        <td>Group-specific moderation notification preferences.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Soft deletion marker.</td>
+      </tr>
+    </table>
 
     <hr>
 
-    <h2 id="error-handling">Error Handling</h2>
+    <h2 id="activities">Activities</h2>
+    <p>Activities are structured tutoring or assignment experiences attached to a group or term. In broader Flint deployments, activity records can also exist at workspace or district scope.</p>
 
-    <h3>Error Response Format</h3>
+    <h3>Endpoints</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/activities</code></div>
+    <p>Lists activities. Typical filters include <code>parent_group_id</code>, <code>parent_term_id</code>, <code>parent_workspace_id</code>, or <code>parent_district_id</code> together with pagination parameters.</p>
+    <h4>Example Request</h4>
+    <pre><code>GET /v1/activities?parent_group_id=grp_grade8_math_a&amp;limit=20&amp;offset=0</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "data": [
+    {
+      "id": "act_linear_equations_intro",
+      "creator_id": "usr_teacher_042",
+      "parent_group_id": "grp_grade8_math_a",
+      "name": "Introduction to Linear Equations",
+      ...
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/activities/{activity_id}</code></div>
+    <p>Returns one activity object by ID.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "activity": {
+    "id": "act_linear_equations_intro",
+    "creator_id": "usr_teacher_042",
+    "parent_group_id": "grp_grade8_math_a",
+    "name": "Introduction to Linear Equations",
+    "summary": "Students solve one-step and two-step linear equations.",
+    "analysis": {
+      ...
+    },
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/activities</code></div>
+    <p>Creates an activity using a body shaped like <code>{ "activity": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "activity": {
+    "creator_id": "usr_teacher_042",
+    "parent_group_id": "grp_grade8_math_a",
+    "name": "Introduction to Linear Equations",
+    "summary": "Students solve one-step and two-step linear equations.",
+    "instructions": "Guide students step by step through one-step and two-step linear equations. Prioritize conceptual explanation before giving the final answer.",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "activity": {
+    "id": "act_linear_equations_intro",
+    "creator_id": "usr_teacher_042",
+    "parent_group_id": "grp_grade8_math_a",
+    "name": "Introduction to Linear Equations",
+    "analysis": {
+      ...
+    },
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-put">PUT</span><code>/v1/activities/{activity_id}</code></div>
+    <p>Updates activity metadata, content, or lifecycle state using a body shaped like <code>{ "activity": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "activity": {
+    "summary": "Students solve one-step, two-step, and multi-step linear equations.",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "activity": {
+    "id": "act_linear_equations_intro",
+    "creator_id": "usr_teacher_042",
+    "parent_group_id": "grp_grade8_math_a",
+    "summary": "Students solve one-step, two-step, and multi-step linear equations.",
+    "analysis": {
+      ...
+    },
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <h3>Fields</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td><code>id</code></td>
+        <td>string</td>
+        <td>Stable activity identifier.</td>
+      </tr>
+      <tr>
+        <td><code>parent_group_id</code></td>
+        <td>string | null</td>
+        <td>Attach activity to a group.</td>
+      </tr>
+      <tr>
+        <td><code>parent_term_id</code></td>
+        <td>string | null</td>
+        <td>Attach activity directly to a term.</td>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td>string</td>
+        <td>Activity title.</td>
+      </tr>
+      <tr>
+        <td><code>creator_id</code></td>
+        <td>string</td>
+        <td>Authoring user or administrator.</td>
+      </tr>
+      <tr>
+        <td><code>summary</code></td>
+        <td>string | null</td>
+        <td>Short summary.</td>
+      </tr>
+      <tr>
+        <td><code>visibility</code></td>
+        <td>enum</td>
+        <td>Access posture.</td>
+      </tr>
+      <tr>
+        <td><code>color</code></td>
+        <td>string</td>
+        <td>Display color.</td>
+      </tr>
+      <tr>
+        <td><code>emoji</code></td>
+        <td>string | null</td>
+        <td>Optional activity icon.</td>
+      </tr>
+      <tr>
+        <td><code>grade_level</code></td>
+        <td>string | null</td>
+        <td>Academic level label.</td>
+      </tr>
+      <tr>
+        <td><code>instructions</code></td>
+        <td>string | null</td>
+        <td>Freeform activity instructions and response guidance.</td>
+      </tr>
+      <tr>
+        <td><code>analysis</code></td>
+        <td>object | null</td>
+        <td>Optional activity-level analysis or summary.</td>
+      </tr>
+      <tr>
+        <td><code>graded</code></td>
+        <td>boolean | null</td>
+        <td>Whether the activity is graded.</td>
+      </tr>
+      <tr>
+        <td><code>available_from</code></td>
+        <td>timestamp | null</td>
+        <td>Availability start.</td>
+      </tr>
+      <tr>
+        <td><code>deadline</code></td>
+        <td>timestamp | null</td>
+        <td>Submission deadline.</td>
+      </tr>
+      <tr>
+        <td><code>paused</code></td>
+        <td>boolean | null</td>
+        <td>Temporarily disables activity access.</td>
+      </tr>
+      <tr>
+        <td><code>locale</code></td>
+        <td>string | null</td>
+        <td>Primary language.</td>
+      </tr>
+      <tr>
+        <td><code>secondary_locales</code></td>
+        <td>array&lt;string&gt;</td>
+        <td>Additional supported languages.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Soft deletion marker.</td>
+      </tr>
+    </table>
+
+    <hr>
+
+    <h2 id="chats">Chats</h2>
+    <p>Chats store session-level tutoring interactions and can belong to an activity, a group, or a term.</p>
+
+    <h3>Endpoints</h3>
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/chats</code></div>
+    <p>Lists chats. Typical filters include <code>parent_activity_id</code>, <code>parent_group_id</code>, or <code>parent_term_id</code> together with pagination parameters.</p>
+    <h4>Example Request</h4>
+    <pre><code>GET /v1/chats?parent_activity_id=act_linear_equations_intro&amp;limit=20&amp;offset=0</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "data": [
+    {
+      "id": "chat_linear_equations_intro",
+      "creator_id": "usr_student_204",
+      "parent_activity_id": "act_linear_equations_intro",
+      "name": "Linear equations practice",
+      ...
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-get">GET</span><code>/v1/chats/{chat_id}</code></div>
+    <p>Returns one chat object by ID, including metadata and messages.</p>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "chat": {
+    "id": "chat_linear_equations_intro",
+    "creator_id": "usr_student_204",
+    "parent_activity_id": "act_linear_equations_intro",
+    "name": "Linear equations practice",
+    "grade": {
+      ...
+    },
+    "analysis": {
+      ...
+    },
+    "messages": [
+      ...
+    ],
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-post">POST</span><code>/v1/chats</code></div>
+    <p>Creates a chat using a body shaped like <code>{ "chat": { ... } }</code>. Exactly one of <code>parent_activity_id</code>, <code>parent_group_id</code>, or <code>parent_term_id</code> should be supplied.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "chat": {
+    "creator_id": "usr_student_204",
+    "parent_activity_id": "act_linear_equations_intro",
+    "name": "Linear equations practice",
+    "messages": [
+      {
+        "user_id": "usr_student_204",
+        "contents": [
+          { "type": "text", "text": "Can you walk me through solving 3x + 5 = 20?" }
+        ]
+      }
+    ],
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "chat": {
+    "id": "chat_linear_equations_intro",
+    "creator_id": "usr_student_204",
+    "parent_activity_id": "act_linear_equations_intro",
+    "name": "Linear equations practice",
+    "grade": {
+      ...
+    },
+    "analysis": {
+      ...
+    },
+    "messages": [
+      ...
+    ],
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <div class="operation">
+    <div class="endpoint"><span class="method method-put">PUT</span><code>/v1/chats/{chat_id}</code></div>
+    <p>Updates chat metadata or lifecycle state using a body shaped like <code>{ "chat": { ... } }</code>.</p>
+    <h4>Example Request</h4>
+    <pre><code>{
+  "chat": {
+    "name": "Linear equations practice - completed",
+    "submitted_at": "2026-09-02T10:45:00Z",
+    ...
+  }
+}</code></pre>
+    <h4>Example Response</h4>
+    <pre><code>{
+  "chat": {
+    "id": "chat_linear_equations_intro",
+    "creator_id": "usr_student_204",
+    "parent_activity_id": "act_linear_equations_intro",
+    "name": "Linear equations practice - completed",
+    "submitted_at": "2026-09-02T10:45:00Z",
+    "grade": {
+      ...
+    },
+    "analysis": {
+      ...
+    },
+    ...
+  }
+}</code></pre>
+    </div>
+
+    <h3>Fields</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td><code>id</code></td>
+        <td>string</td>
+        <td>Stable chat identifier.</td>
+      </tr>
+      <tr>
+        <td><code>creator_id</code></td>
+        <td>string</td>
+        <td>User who started the chat.</td>
+      </tr>
+      <tr>
+        <td><code>parent_activity_id</code></td>
+        <td>string | null</td>
+        <td>Use for activity sessions.</td>
+      </tr>
+      <tr>
+        <td><code>parent_group_id</code></td>
+        <td>string | null</td>
+        <td>Use for general group chats.</td>
+      </tr>
+      <tr>
+        <td><code>parent_term_id</code></td>
+        <td>string | null</td>
+        <td>Use for term-level chats.</td>
+      </tr>
+      <tr>
+        <td><code>name</code></td>
+        <td>string | null</td>
+        <td>Optional session name.</td>
+      </tr>
+      <tr>
+        <td><code>visibility</code></td>
+        <td>enum</td>
+        <td>Session visibility.</td>
+      </tr>
+      <tr>
+        <td><code>messages</code></td>
+        <td>array&lt;object&gt;</td>
+        <td>Initial persisted messages when creating a chat.</td>
+      </tr>
+      <tr>
+        <td><code>grade</code></td>
+        <td>object | null</td>
+        <td>Optional grading result associated with the session.</td>
+      </tr>
+      <tr>
+        <td><code>analysis</code></td>
+        <td>object | null</td>
+        <td>Optional session-level learning analysis or summary.</td>
+      </tr>
+      <tr>
+        <td><code>submitted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Marks session submission/completion.</td>
+      </tr>
+      <tr>
+        <td><code>deleted_at</code></td>
+        <td>timestamp | null</td>
+        <td>Soft deletion marker.</td>
+      </tr>
+    </table>
+
+    <hr>
+
+    <h2 id="errors">Error Handling</h2>
+
+    <h3>Error Format</h3>
     <pre><code>{
   "error": {
     "code": "INVALID_REQUEST",
-    "message": "The 'content' field is required",
-    "details": {
-      "field": "content",
-      "reason": "missing_required_field"
-    }
+    "message": "The request body is missing a required field."
   }
 }</code></pre>
 
-    <h3>Error Codes</h3>
+    <h3>Common Error Codes</h3>
     <table>
       <tr>
         <th>Code</th>
@@ -898,48 +1461,38 @@ Content-Type: application/json
       <tr>
         <td><code>UNAUTHORIZED</code></td>
         <td>401</td>
-        <td>Invalid or missing API key</td>
+        <td>Missing or invalid API credentials.</td>
       </tr>
       <tr>
         <td><code>FORBIDDEN</code></td>
         <td>403</td>
-        <td>Insufficient permissions</td>
+        <td>Caller does not have permission to perform the operation.</td>
       </tr>
       <tr>
         <td><code>NOT_FOUND</code></td>
         <td>404</td>
-        <td>Resource not found</td>
-      </tr>
-      <tr>
-        <td><code>RATE_LIMITED</code></td>
-        <td>429</td>
-        <td>Too many requests</td>
+        <td>Referenced resource does not exist.</td>
       </tr>
       <tr>
         <td><code>INVALID_REQUEST</code></td>
         <td>400</td>
-        <td>Malformed request body</td>
+        <td>Request body is malformed or missing required fields.</td>
+      </tr>
+      <tr>
+        <td><code>CONFLICT</code></td>
+        <td>409</td>
+        <td>Operation conflicts with current resource state.</td>
       </tr>
       <tr>
         <td><code>SERVER_ERROR</code></td>
         <td>500</td>
-        <td>Internal server error</td>
+        <td>Unexpected server error.</td>
       </tr>
     </table>
 
     <hr>
 
-    <h2 id="support">Support</h2>
-    <p>For technical support and integration assistance:</p>
-    <ul>
-      <li><strong>Email</strong>: <a href="mailto:support@flintk12.com">support@flintk12.com</a></li>
-      <li><strong>Documentation</strong>: <a href="https://docs.flintk12.com">https://docs.flintk12.com</a></li>
-      <li><strong>Status Page</strong>: <a href="https://status.flintk12.com">https://status.flintk12.com</a></li>
-    </ul>
-
-    <hr>
-
-    <p><em>This documentation is subject to updates. Last revised: April 2026</em></p>
+    <p><em>Draft specification for commercial review. Last revised: April 30, 2026</em></p>
   </div>
 </body>
 </html>
